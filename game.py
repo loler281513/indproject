@@ -23,8 +23,10 @@ class Game:
         self.run = True
 
         self.score = 0
+        
+        self.level = 1
 
-        self.game_over_height = self.window_height -450
+        self.game_over_height = self.window_height -350
 
     
     
@@ -42,7 +44,7 @@ class Game:
         for row in range(5):
             for column in range(11):
                 x = 75 + column * 64
-                y = 110 + row * 64
+                y = 100 + row * 64
                 
                 if row == 0:
                     alien_type = 3
@@ -53,18 +55,19 @@ class Game:
                 enemy = Enemy(alien_type,x,y) 
                 self.enemy_group.add(enemy)
 
-    def move_enemy(self):
+    def move_enemy(self, i):
         self.enemy_group.update(self.enemy_direction)
         enemy_sprites = self.enemy_group.sprites()
         for enemy in enemy_sprites:
             if enemy.rect.right >= self.window_width:
-                self.enemy_direction = -1
-                self.enemy_move_down(4)
+                self.enemy_direction = -i
+                self.enemy_move_down(1)
             elif enemy.rect.left <= 0:
-                self.enemy_direction = 1
-                self.enemy_move_down(4)
+                self.enemy_direction = i
+                self.enemy_move_down(1)
             if enemy.rect.bottom >= self.game_over_height:
                 self.run = False
+    
 
 
     def enemy_move_down(self,distance):
@@ -72,6 +75,8 @@ class Game:
             for enemy in self.enemy_group.sprites():
                 enemy.rect.y += distance
 
+    def enemy_direct(self,i):
+        self.enemy_direction = i
     
     def enemy_shoot_laser(self):
         if self.enemy_group.sprites():
@@ -112,12 +117,12 @@ class Game:
                     if pygame.sprite.spritecollide(laser_sprite, obstacle.blocks_group, True):
                         laser_sprite.kill()
 
-        #сделать косание с y при котором игрок проиграет
     
     def game_over(self):
         self.run = False
     
     def reset(self):
+
         self.run = True
         self.lives = 3
         self.ship_group.sprite.reset()
@@ -125,6 +130,10 @@ class Game:
         self.enemy_lasers_group.empty()
         self.create_enemy()
         self.obstacles = self.create_obstacles()
+        self.enemy_direction = 1
+
+
+    def reset_score(self):
         self.score = 0
 
         
