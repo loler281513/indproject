@@ -34,11 +34,21 @@ game = Game(width,height)
 font = pygame.font.Font(None,60)
 score_text = font.render("Score:",False,(255,255,255))
 level_text = font.render("Level:",False,(255,255,255))
+volume_text = font.render("Volume:",False,(255,255,255))
 
 BUTTON_CLICK_EVENT = pygame.USEREVENT + 1
 
 shoot_laser = pygame.USEREVENT
 pygame.time.set_timer(shoot_laser,500)
+
+shoot_laser_boss = pygame.USEREVENT + 3
+pygame.time.set_timer(shoot_laser_boss,1400)
+
+music_count = 0
+music_volume = 1
+
+pygame.mixer.music.load("button/sound/music.ogg")
+pygame.mixer.music.play()
 
 
 def main_menu():
@@ -83,15 +93,22 @@ def main_menu():
         pygame.display.flip()          
                 
 def settings_menu():
+    global music_count
+    global music_volume
+    global volume_text
     sound_button = imageButton(width/2-(252/2),150,252,74,"","button/sound/sound01.png","button/sound/sound03.png","button/sound/sound.mp3")
     music_button = imageButton(width/2-(252/2),250,252,74,"","button/music/music01.png","button/music/music03.png","button/sound/sound.mp3")
-    star_button = imageButton(width/2-(252/2),350,252,74,"","button/star/star01.png","button/star/star03.png","button/sound/sound.mp3")
     back_button = imageButton(width/2-(252/2),450,252,74,"","button/back/back01.png","button/back/back03.png","button/sound/sound.mp3")
 
     running =  True
     while running:
         window.fill((0,0,0))
         window.blit(main_background,(-100,0))
+
+        window.blit(volume_text,(width/2+(252/2),165))
+        volume_number = font.render(str(int(music_volume*100)),False,(255,255,255))
+        window.blit(volume_number,(width/2+300,165))
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -104,16 +121,35 @@ def settings_menu():
                     running = False
                     back_s.play()
                     fade()
+            if event.type == BUTTON_CLICK_EVENT and event.button == sound_button:
+                music_volume += 0.2
+                if music_volume <= 1:
+                    pygame.mixer.music.set_volume(music_volume)
+                if music_volume > 1:
+                    music_volume = 0.2
+                    pygame.mixer.music.set_volume(music_volume)
+
+            if event.type == BUTTON_CLICK_EVENT and event.button == music_button:
+                music_count += 1
+                if music_count == 1:
+                    pygame.mixer.music.stop()
+                if music_count == 2:
+                    pygame.mixer.music.play()
+                else:
+                    pygame.mixer.music.stop()
+                    music_count = 1
+                
+
             
             if event.type == BUTTON_CLICK_EVENT and event.button == back_button:
                 running = False
                 back_s.play()
                 fade()
 
-            for btn in [sound_button,music_button,star_button,back_button]:
+            for btn in [sound_button,music_button,back_button]:
                 btn.handle_event(event)
 
-        for btn in [sound_button,music_button,star_button,back_button]:
+        for btn in [sound_button,music_button,back_button]:
             btn.check_hover(pygame.mouse.get_pos())
             btn.draw(window)
 
@@ -135,18 +171,45 @@ def new_game():
             if event.type == shoot_laser and game.run:
                 game.enemy_shoot_laser()
             
+            if event.type == shoot_laser_boss and game.run:
+                game.boss_shoot_laser()
+                
+            
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     upp()
-
                     surf = pygame.Surface((width, height))
                     surf.fill((0, 0, 0))
                     surf.set_alpha(200)
                     window.blit(surf, (0, 0))
                     window.blit(paused,(width/4-40,height/4+100))
+                    
                     pause()
+
         if game.run:
             upp()
+            if not game.enemy_group and level == 3:
+                if not game.hp == 0:
+                    game.add_boss()
+                if game.hp == 0:
+                    surf = pygame.Surface((width, height))
+                    surf.fill((0, 0, 0))
+                    surf.set_alpha(200)
+                    window.blit(surf, (0, 0))
+                    window.blit(level_up,(width/4+10,height/8))
+                    next_level()
+
+                
+                
+
+            elif not game.enemy_group:
+                upp()
+                surf = pygame.Surface((width, height))
+                surf.fill((0, 0, 0))
+                surf.set_alpha(200)
+                window.blit(surf, (0, 0))
+                window.blit(level_up,(width/4+10,height/8))
+                next_level()
         else:
             upp()
             surf = pygame.Surface((width, height))
@@ -156,14 +219,8 @@ def new_game():
             window.blit(game_over,(width/4-40,height/4+100))
             game_reset()
 
-        if not game.enemy_group:
-            upp()
-            surf = pygame.Surface((width, height))
-            surf.fill((0, 0, 0))
-            surf.set_alpha(200)
-            window.blit(surf, (0, 0))
-            window.blit(level_up,(width/4+10,height/8))
-            next_level()
+        
+        
 
         clock.tick(fps)
         pygame.display.flip()
@@ -189,9 +246,10 @@ def pause():
                 back_s.play()
                 speed_enemy = 1
                 fade()
+                level = 1
                 game.reset()
                 game.reset_score()
-                level = 1
+
                 main_menu()
 
             for btn in [back_button]:
@@ -219,7 +277,7 @@ def game_reset():
                 sys.exit()
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_RETURN:
                     back_s.play()
                     speed_enemy = 1
                     game.reset()    
@@ -274,6 +332,16 @@ def next_level():
                 running = False
                 pygame.quit()
                 sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    speed_enemy += 1
+                    level += 1
+                    back_s.play()
+                    game.reset()
+                    fade()
+                    game.enemy_direct(speed_enemy)
+                    new_game()
             
             if event.type == BUTTON_CLICK_EVENT and event.button == next_button:
                 speed_enemy += 1
@@ -286,6 +354,7 @@ def next_level():
 
 
             if event.type == BUTTON_CLICK_EVENT and event.button == back_button:
+                speed_enemy = 1
                 back_s.play()
                 game.reset()
                 game.reset_score()
@@ -346,13 +415,27 @@ def upp():
     game.ship_group.update()
     game.ship_group.draw(window)
     game.ship_group.sprite.lasers_group.draw(window)
+
     for obstacle in game.obstacles:
         obstacle.blocks_group.draw(window)
+
     game.enemy_group.draw(window)
     game.move_enemy(speed_enemy)
     game.enemy_lasers_group.update()
     game.enemy_lasers_group.draw(window)
+
+    if game.boss_group:
+        game.heal_bar(window)
+        game.boss_laser_group.draw(window)
+        game.boss_group.draw(window)
+        game.move_boss()
+        game.boss_group.update()
+        game.boss_laser_group.update()
+
     game.check_for_collisions()
+
+
+
 
 if __name__ == "__main__":
     main_menu()
