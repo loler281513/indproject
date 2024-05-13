@@ -159,8 +159,8 @@ class Game:
         return obstacles
     
     def create_enemy(self):
-        for row in range(1):
-            for column in range(1):
+        for row in range(5):
+            for column in range(11):
                 x = 75 + column * 64
                 y = 100 + row * 64
                 
