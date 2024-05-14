@@ -15,15 +15,14 @@ class Spaceship(pygame.sprite.Sprite):
         self.laser_delay = 300
         self.laser_offset = 25
 
-        self.shoot_animation = [pygame.image.load("ship/shoot/0.png"),
-                                pygame.image.load("ship/shoot/1.png"),
-                                pygame.image.load("ship/shoot/2.png"),
-                                pygame.image.load("ship/shoot/3.png")]
-        self.go_up_animation = [pygame.image.load("ship/up/0.png"),
-                                pygame.image.load("ship/up/1.png"),
-                                pygame.image.load("ship/up/2.png"),
-                                pygame.image.load("ship/up/3.png"),
-                                pygame.image.load("ship/up/4.png")]
+        self.shoot_animation = []
+        for i in range(4):
+            self.shoot_animation.append(pygame.image.load(f"ship/shoot/{i}.png"))
+
+        self.go_up_animation = []
+        for i in range(5):
+            self.go_up_animation.append(pygame.image.load(f"ship/up/{i}.png"))
+            
         self.current_slide = 0
         self.go_up = False
         self.shooting = False
